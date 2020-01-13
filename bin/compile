@@ -30,30 +30,35 @@ function vendor() {
   tar -xz -f $binary -C $path
 
   if [ -d "$path/bin" ]; then
-    export PATH=$path/bin:$PATH
+    export PATH=$PATH:$path/bin
   fi
 
   if [ -d "$path/lib/pkgconfig" ]; then
     # pkg-config should handle compiler options (if used)
-    export PKG_CONFIG_PATH="$path/lib/pkgconfig:$PKG_CONFIG_PATH"
+    export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$path/lib/pkgconfig"
   fi
 
   # standard paths
-  export CPPPATH="$path/include:$CPPPATH"
-  export CPATH="$path/include:$CPATH"
-  export LIBRARY_PATH="$path/lib:$LIBRARY_PATH"
+  export CPPPATH="$CPPPATH:$path/include"
+  export CPATH="$CPATH:$path/include"
+  export LIBRARY_PATH="$LIBRARY_PATH:$path/lib"
 
-  export LD_LIBRARY_PATH="$path/lib:$LD_LIBRARY_PATH"
+  export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$path/lib"
 }
 
 echo "Vendoring binaries" | arrow
 
 vendor "${ROOT_DIR}/build/libvips.tar.gz" "$BUILD_DIR/vendor/vips"
 
+echo "Tweaking glib include paths" | arrow
+
+export CPPPATH="$CPPPATH:$BUILD_DIR/vendor/vips/include/glib-2.0:$BUILD_DIR/vendor/vips/lib/glib-2.0/include"
+export CPATH="$CPATH:$BUILD_DIR/vendor/vips/include/glib-2.0:$BUILD_DIR/vendor/vips/lib/glib-2.0/include"
+
 echo "Configuring build environment" | arrow
 
 cat <<EOF > export
-export PATH="/app/bin:$PATH:\$PATH"
+export PATH="\$PATH:$PATH"
 export LD_LIBRARY_PATH="\$LD_LIBRARY_PATH:$LD_LIBRARY_PATH"
 export LIBRARY_PATH="\$LIBRARY_PATH:$LIBRARY_PATH"
 export PKG_CONFIG_PATH="\$PKG_CONFIG_PATH:$PKG_CONFIG_PATH"
@@ -65,7 +70,7 @@ echo "Building runtime environment" | arrow
 mkdir -p $BUILD_DIR/.profile.d
 
 cat <<EOF > $BUILD_DIR/.profile.d/$BUILDPACK_NAME.sh
-export PATH="/app/bin:${PATH//$BUILD_DIR//app}:\$PATH"
+export PATH="\$PATH:${PATH//$BUILD_DIR//app}"
 export LD_LIBRARY_PATH="\$LD_LIBRARY_PATH:${LD_LIBRARY_PATH//$BUILD_DIR//app}"
 export LIBRARY_PATH="\$LIBRARY_PATH:${LIBRARY_PATH//$BUILD_DIR//app}"
 export PKG_CONFIG_PATH="\$PKG_CONFIG_PATH:${PKG_CONFIG_PATH//$BUILD_DIR//app}"
@@ -76,56 +81,3 @@ EOF
 echo "build dir $BUILD_DIR"
 echo "LIBRARY_PATH $LIBRARY_PATH"
 echo "ld LIBRARY_PATH: $LD_LIBRARY_PATH"
-
-# !/usr/bin/env bash
-# bin/compile BUILD_DIR CACHE_DIR ENV_DIR
-
-# arrow() {
-#   sed -u 's/^/-----> /'
-# }
-# indent() {
-#   sed -u 's/^/       /'
-# }
-
-# BUILD_DIR=$1
-# CACHE_DIR=$2
-# BUILDPACK_DIR=`cd $(dirname $0)/..; pwd`
-
-# # extract url of latest production version from the rss feed
-#  TARBALL_URL="https://dronebase-public.s3-us-west-2.amazonaws.com/buildpacks/libvips-8.9.0.tar.gz"
-#  RENAME_DIR="$(echo "$TARBALL_URL" | perl -ne '/.+\/(.+)\.tar\.gz/ && print $1')"
-#  VERSION_NO="$(echo "$RENAME_DIR"  | perl -ne '/libvips-(.+)$/i   && print $1')"
-
-# PROFILE_PATH="$BUILD_DIR/.profile.d"
-#  TARGET_PATH="$BUILD_DIR/vendor"
-#  VENDOR_PATH="/app/vendor"
-
-# echo "Installing libvips" | arrow
-# mkdir -p "$TARGET_PATH"
-# cd       "$TARGET_PATH"
-
-# # download and unpack
-# echo "Fetching   $TARBALL_URL" | indent
-# curl --fail --retry 3 --retry-delay 1 --connect-timeout 3 "$TARBALL_URL" -s -o - | tar xzf -
-
-# # configure path
-# mkdir -p    "$PROFILE_PATH"
-# cat <<EOF > "$PROFILE_PATH/libvips.sh"
-# export PATH="$VENDOR_PATH/libvips:\$PATH"
-# EOF
-
-# # show installed version
-# mv "$RENAME_DIR" libvips
-# cd             ./libvips
-# echo "Installed: "`ls libvips*` | indent
-# echo "Setting up config:" `/sbin/ldconfig` | indent
-# echo
-
-
-# echo "build dir $BUILD_DIR"
-# echo "PROFILE_PATH $PROFILE_PATH"
-# echo "VENDOR_PATH $VENDOR_PATH"
-# echo "ld LIBRARY_PATH: $LD_LIBRARY_PATH"
-
-
-

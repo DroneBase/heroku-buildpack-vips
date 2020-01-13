@@ -1,8 +1,6 @@
 FROM heroku/heroku:18
 
 ARG VIPS_VERSION
-ARG ORC_VERSION
-ARG ORC_URL
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -54,6 +52,9 @@ RUN cd /usr/src \
 RUN apt-get install -y \
     python3-pip
 RUN pip3 install ninja meson
+
+ARG ORC_VERSION=0.4.31
+ARG ORC_URL=https://dronebase-public.s3-us-west-2.amazonaws.com/buildpacks
 
 RUN cd /usr/src \
 	&& wget ${ORC_URL}/orc-$ORC_VERSION.tar.gz \

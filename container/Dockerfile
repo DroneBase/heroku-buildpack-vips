@@ -1,6 +1,8 @@
 FROM heroku/heroku:18
 
 ARG VIPS_VERSION
+ARG ORC_VERSION
+ARG ORC_URL
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -48,19 +50,21 @@ RUN cd /usr/src \
 	&& make \
 	&& make install
 
-ARG ORC_VERSION=0.4.28
-ARG ORC_URL=http://cgit.freedesktop.org/gstreamer/orc/snapshot
+# orc uses ninja and meson to build
+RUN apt-get install -y \
+    python3-pip
+RUN pip3 install ninja meson
 
 RUN cd /usr/src \
 	&& wget ${ORC_URL}/orc-$ORC_VERSION.tar.gz \
 	&& tar xf orc-${ORC_VERSION}.tar.gz \
 	&& cd orc-${ORC_VERSION} \
-	&& ./autogen.sh \
-	&& ./configure --prefix=/usr/src/vips --disable-gtk-doc \
-	&& make \
-	&& make install
+	&& meson build --prefix=/usr/src/vips --libdir=/usr/src/vips/lib \
+	&& cd build \
+	&& ninja \
+	&& ninja install
 
-ARG GSF_VERSION=1.14.42
+ARG GSF_VERSION=1.14.46
 ARG GSF_URL=http://ftp.gnome.org/pub/GNOME/sources/libgsf
 
 RUN cd /usr/src \

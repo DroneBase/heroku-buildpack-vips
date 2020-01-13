@@ -30,7 +30,6 @@ RUN apt-get update && apt-get install -y \
 	glib-2.0-dev \
 	libexpat-dev \
 	librsvg2-dev \
-	libpng-dev \
 	libjpeg-dev \
 	libtiff5-dev \
 	libexif-dev \

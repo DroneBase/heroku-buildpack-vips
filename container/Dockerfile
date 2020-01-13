@@ -1,6 +1,8 @@
 FROM heroku/heroku:18
 
-ARG VIPS_VERSION
+ARG VIPS_VERSION=$VIPS_VERSION
+
+RUN echo ${VIPS_VERSION}
 
 ENV DEBIAN_FRONTEND noninteractive
 
@@ -35,7 +37,20 @@ RUN apt-get update && apt-get install -y \
 	liblcms2-dev \
 	libxml2-dev \
 	libfftw3-dev \
-  libpoppler-glib-dev
+  libpoppler-glib-dev \
+  libgsf-1-dev
+
+
+ARG WEBP_VERSION=1.0.2
+ARG WEBP_URL=https://storage.googleapis.com/downloads.webmproject.org/releases/webp
+
+RUN cd /usr/src \
+	&& wget ${WEBP_URL}/libwebp-$WEBP_VERSION.tar.gz \
+	&& tar xf libwebp-${WEBP_VERSION}.tar.gz \
+	&& cd libwebp-${WEBP_VERSION} \
+	&& ./configure --prefix=/usr/src/vips \
+	&& make \
+	&& make install
 
 ARG GIFLIB_VERSION=5.1.4
 ARG GIFLIB_URL=http://downloads.sourceforge.net/project/giflib
@@ -72,6 +87,27 @@ RUN cd /usr/src \
 	&& wget ${GSF_URL}/${GSF_VERSION%.*}/libgsf-$GSF_VERSION.tar.xz \
 	&& tar xf libgsf-${GSF_VERSION}.tar.xz \
 	&& cd libgsf-${GSF_VERSION} \
+	&& ./configure --prefix=/usr/src/vips --disable-gtk-doc \
+	&& make \
+	&& make install
+
+
+ARG CFIT_URL=http://heasarc.gsfc.nasa.gov/FTP/software/fitsio/c/cfitsio-3.47.tar.gz
+
+RUN cd /usr/src \
+	&& wget ${CFIT_URL} \
+	&& tar xf cfitsio-3.47.tar.gz \
+	&& cd cfitsio-3.47 \
+	&& ./configure --prefix=/usr/src/vips --disable-gtk-doc \
+	&& make \
+	&& make install
+
+ARG LCMS_URL=http://downloads.sourceforge.net/project/lcms/lcms/2.9/lcms2-2.9.tar.gz
+
+RUN cd /usr/src \
+	&& wget ${LCMS_URL} \
+	&& tar xf lcms2-2.9.tar.gz \
+	&& cd lcms2-2.9 \
 	&& ./configure --prefix=/usr/src/vips --disable-gtk-doc \
 	&& make \
 	&& make install
